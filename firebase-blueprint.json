@@ -1,0 +1,37 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User document tracking streaks, gameplay progress, and profile settings.",
+      "type": "object",
+      "properties": {
+        "current_streak": { "type": "integer" },
+        "highest_streak": { "type": "integer" },
+        "last_login_date": { "type": "string", "format": "date-time" },
+        "xp": { "type": "integer" },
+        "starCurrency": { "type": "integer" },
+        "level": { "type": "integer" },
+        "playerName": { "type": "string" },
+        "avatar": { "type": "string" },
+        "onboardingDone": { "type": "boolean" },
+        "badges": { "type": "array", "items": { "type": "string" } },
+        "dailyQuests": { "type": "array" },
+        "dailyQuestsDate": { "type": "string" },
+        "progress": { "type": "object" },
+        "worldCorrectStats": { "type": "object" },
+        "powerUps": { "type": "object" },
+        "lessonsCompletedToday": { "type": "integer" },
+        "perfectScoresToday": { "type": "integer" },
+        "xpEarnedToday": { "type": "integer" },
+        "worldsVisitedToday": { "type": "array", "items": { "type": "string" } },
+        "avatar_customization": { "type": "object" }
+      }
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "Comprehensive user profile and game state."
+    }
+  }
+}

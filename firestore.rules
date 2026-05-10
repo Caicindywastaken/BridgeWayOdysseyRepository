@@ -1,0 +1,73 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Phase 3: Primitive Definitions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    match /users/{userId} {
+      // Validation Blueprint
+      function isValidUser(data) {
+        let requiredFields = ['current_streak', 'highest_streak', 'last_login_date'];
+        return data.keys().hasAll(requiredFields) &&
+               data.current_streak is int &&
+               data.highest_streak is int &&
+               data.last_login_date is string &&
+               data.last_login_date.size() <= 128 &&
+               // Optional fields and complex objects
+               (!('xp' in data) || data.xp is int) &&
+               (!('starCurrency' in data) || data.starCurrency is int) &&
+               (!('level' in data) || data.level is int) &&
+               (!('playerName' in data) || data.playerName is string) &&
+               (!('avatar' in data) || data.avatar is string) &&
+               (!('onboardingDone' in data) || data.onboardingDone is bool) &&
+               (!('progress' in data) || data.progress is map) &&
+               (!('badges' in data) || data.badges is list) &&
+               (!('dailyQuests' in data) || data.dailyQuests is list) &&
+               (!('worldCorrectStats' in data) || data.worldCorrectStats is map) &&
+               (!('powerUps' in data) || data.powerUps is map) &&
+               (!('avatar_customization' in data) || data.avatar_customization is map);
+      }
+
+      function isVerified() {
+        return isSignedIn() && (request.auth.token.email_verified == true || request.auth.token.firebase.sign_in_provider == 'google.com');
+      }
+
+      allow get: if isOwner(userId) && isValidId(userId);
+      
+      allow create: if isOwner(userId) && 
+                      isValidId(userId) && 
+                      isVerified() &&
+                      isValidUser(incoming());
+
+      allow update: if isOwner(userId) && 
+                      isValidId(userId) && 
+                      isVerified() &&
+                      isValidUser(incoming());
+                      
+      allow delete: if false;
+    }
+  }
+}
